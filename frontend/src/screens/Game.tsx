@@ -3,22 +3,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { useSocket } from "../hooks/useSocket";
 import ChessBoard from "../components/ChessBoard";
 import { Chess } from "chess.js";
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
 import { useNavigate, useParams } from "react-router-dom";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDTaUOi2XJKKOQJJmhoutOtHZzmM8QbH-w",
-  authDomain: "chess-c3ac9.firebaseapp.com",
-  projectId: "chess-c3ac9",
-  storageBucket: "chess-c3ac9.appspot.com",
-  messagingSenderId: "268519890943",
-  appId: "1:268519890943:web:6024d4d120b92ad1c8d1ca",
-  measurementId: "G-LMC6B05B9S",
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 
 export const INIT_GAME = "init_game";
 export const MOVE = "move";
@@ -31,7 +16,6 @@ export const START_CUSTOM = "start_custom";
 const Game = () => {
   const navigate = useNavigate();
   const socket = useSocket();
-  const [user] = useAuthState(auth);
   const [chess, setChess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
   const [started, setStarted] = useState(false);
@@ -87,12 +71,6 @@ const Game = () => {
       }
     };
   }, [socket]);
-
-  useEffect(() => {
-    if (user) {
-      setPlayer1(user.displayName || "Player1");
-    }
-  }, [user]);
 
   const customGameHandler = () => {
     if (socket) {
