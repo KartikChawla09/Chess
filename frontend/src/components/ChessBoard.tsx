@@ -1,6 +1,6 @@
 import { Color, PieceSymbol, Square } from "chess.js";
 import { useState } from "react";
-import { MOVE } from "../screens/Game";
+import MoveSound from "../assets/move-self.mp3";
 
 const ChessBoard = ({
   chess,
@@ -17,6 +17,7 @@ const ChessBoard = ({
   } | null)[][];
   handleMove: (move: { from: Square; to: Square }) => void;
 }) => {
+  const audio = new Audio(MoveSound);
   const [from, setFrom] = useState<null | Square>(null);
   return (
     <div className="text-white-200">
@@ -37,6 +38,7 @@ const ChessBoard = ({
                       setFrom(null);
                       handleMove(move);
                       console.log(move);
+                      audio.play();
                     }
                   }}
                   key={j}

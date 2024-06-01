@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useAuthState } from "react-firebase-hooks/auth";
 import { useSocket } from "../hooks/useSocket";
 import ChessBoard from "../components/ChessBoard";
 import { Chess } from "chess.js";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import MoveSound from "../assets/move-self.mp3";
 
 export const INIT_GAME = "init_game";
 export const MOVE = "move";
@@ -12,9 +12,9 @@ export const REJOIN_GAME = "rejoin_game";
 export const CUSTOM_GAME = "custom_game";
 export const REDIRECT = "redirect";
 export const START_CUSTOM = "start_custom";
+const audio = new Audio(MoveSound);
 
 const Game = () => {
-  const navigate = useNavigate();
   const socket = useSocket();
   const [chess, setChess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
@@ -33,9 +33,7 @@ const Game = () => {
       return;
     }
     if (socket) {
-      console.log("Balle!");
       if (customGameId) {
-        console.log(customGameId);
         socket.send(
           JSON.stringify({
             type: START_CUSTOM,
@@ -60,6 +58,7 @@ const Game = () => {
           setBoard(chess.board());
           setMoves((prevMoves) => [...prevMoves, move]);
           console.log("Move Made");
+          audio.play();
           break;
         case GAME_OVER:
           setWinner(message.payload.winner);
