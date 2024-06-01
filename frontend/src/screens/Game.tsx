@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSocket } from "../hooks/useSocket";
 import ChessBoard from "../components/ChessBoard";
-import { Chess } from "chess.js";
+import { Chess, Square } from "chess.js";
 import { useParams } from "react-router-dom";
 import MoveSound from "../assets/move-self.mp3";
 
@@ -13,6 +13,23 @@ export const CUSTOM_GAME = "custom_game";
 export const REDIRECT = "redirect";
 export const START_CUSTOM = "start_custom";
 const audio = new Audio(MoveSound);
+
+export function isPromoting(chess: Chess, from: Square, to: Square) {
+  if (!from) {
+    return false;
+  }
+  const piece = chess.get(from);
+  if (piece?.type !== "p") {
+    return false;
+  }
+  if (piece.color !== chess.turn()) {
+    return false;
+  }
+  if (!["1", "8"].some((it) => to.endsWith(it))) {
+    return false;
+  }
+  return true;
+}
 
 const Game = () => {
   const socket = useSocket();
@@ -86,6 +103,10 @@ const Game = () => {
       return;
     }
     if (socket) {
+      if (isPromoting(chess, move.from, move.to)) {
+        move.promotion = "q";
+        console.log(move);
+      }
       socket.send(
         JSON.stringify({
           type: MOVE,

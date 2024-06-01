@@ -1,4 +1,4 @@
-import { Chess } from "chess.js";
+import { Chess, Move, Square } from "chess.js";
 import { WebSocket } from "ws";
 import { GAME_OVER, INIT_GAME } from "./messages";
 import { PrismaClient } from "@prisma/client";
@@ -48,8 +48,8 @@ export class Game {
   async makeMove(
     socket: WebSocket,
     move: {
-      from: string;
-      to: string;
+      from: Square;
+      to: Square;
     }
   ) {
     if (this.board.turn() === "w" && socket !== this.player1) {
