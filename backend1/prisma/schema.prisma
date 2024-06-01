@@ -23,3 +23,8 @@ model Move {
   from      String
   to        String
 }
+
+model Custom {
+  id        String   @id @default(uuid())
+  player    String
+}
