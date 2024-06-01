@@ -58,6 +58,7 @@ const Game = () => {
           const move = message.payload;
           chess.move(move);
           setBoard(chess.board());
+          setMoves((prevMoves) => [...prevMoves, move]);
           console.log("Move Made");
           break;
         case GAME_OVER:
@@ -155,7 +156,7 @@ const Game = () => {
                 className="text-white text-1xl mt-10"
                 onClick={() => {
                   navigator.clipboard.writeText(remoteurl);
-                  alert("Url Copied!");
+                  alert("URL Copied!");
                 }}
               >
                 Click to Copy URL {remoteurl}
