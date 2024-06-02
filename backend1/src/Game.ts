@@ -88,9 +88,9 @@ export class Game {
       );
     }
     if (this.board.isGameOver()) {
-      var winner = this.board.turn() === "w" ? "black" : "white";
+      var winner = this.board.turn() === "w" ? "Black" : "White";
       if (this.board.isStalemate()) {
-        winner = "None, Game reached stalemate";
+        winner = "None, Draw by Stalemate";
       }
       if (this.player1) {
         this.player1.send(

@@ -95,7 +95,6 @@ const Game = () => {
 
   const customGameHandler = () => {
     if (socket) {
-      console.log(socket);
       socket.send(JSON.stringify({ type: CUSTOM_GAME }));
     }
   };

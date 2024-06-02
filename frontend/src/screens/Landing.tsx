@@ -12,7 +12,7 @@ const Landing = () => {
           <div className="pt-8">
             <div className="flex justify-center">
               <h1 className="text-4xl font-bold text-white text-center">
-                Play Chess Online on Kartik Carlsen's #1 Platform
+                Play Chess Online on Kartik Chawla's #1 Platform
               </h1>
             </div>
             <div className="pt-10 mt-4 flex justify-center">

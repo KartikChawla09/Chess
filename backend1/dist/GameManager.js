@@ -47,16 +47,13 @@ class GameManager {
             }
             if (message.type === messages_1.CUSTOM_GAME) {
                 const game = yield this.createCustomGame(socket);
-                console.log("IN CUSTOM GAME" + game + socket);
                 this.customGames.set(game, socket);
                 socket.send(JSON.stringify({ type: messages_1.REDIRECT, gameId: game }));
             }
             if (message.type === messages_1.START_CUSTOM) {
-                console.log(message);
                 const customGameId = message.customGameId;
                 const otherUser = this.customGames.get(customGameId);
                 if (otherUser) {
-                    console.log("Dusri Game Start");
                     const game = yield this.createGame(socket, otherUser);
                 }
             }

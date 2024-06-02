@@ -52,16 +52,13 @@ export class GameManager {
       }
       if (message.type === CUSTOM_GAME) {
         const game = await this.createCustomGame(socket);
-        console.log("IN CUSTOM GAME" + game + socket);
         this.customGames.set(game, socket);
         socket.send(JSON.stringify({ type: REDIRECT, gameId: game }));
       }
       if (message.type === START_CUSTOM) {
-        console.log(message);
         const customGameId = message.customGameId;
         const otherUser = this.customGames.get(customGameId);
         if (otherUser) {
-          console.log("Dusri Game Start");
           const game = await this.createGame(socket, otherUser);
         }
       }
