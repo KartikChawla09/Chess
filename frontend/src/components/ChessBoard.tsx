@@ -3,10 +3,8 @@ import { useEffect, useState } from "react";
 import MoveSound from "../assets/move-self.mp3";
 
 const ChessBoard = ({
-  chess,
   board,
   handleMove,
-  setBoard,
   userColor,
 }: {
   chess: any;

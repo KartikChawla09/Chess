@@ -33,13 +33,12 @@ export function isPromoting(chess: Chess, from: Square, to: Square) {
 
 const Game = () => {
   const socket = useSocket();
-  const [chess, setChess] = useState(new Chess());
+  const [chess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
   const [started, setStarted] = useState(false);
-  const [gameId, setGameId] = useState<string | null>(null);
   const [moves, setMoves] = useState<any[]>([]);
-  const [player1, setPlayer1] = useState("Wannabe Magnus");
-  const [player2, setPlayer2] = useState("Wannabe Hikaru");
+  const [player1] = useState("Wannabe Magnus");
+  const [player2] = useState("Wannabe Hikaru");
   const [winner, setWinner] = useState<string | null>(null);
   const [remoteurl, setRemoteUrl] = useState<string | null>(null);
   const [userColor, setUserColor] = useState<string | null>(null);
