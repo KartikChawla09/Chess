@@ -75,7 +75,10 @@ class Game {
                 }));
             }
             if (this.board.isGameOver()) {
-                const winner = this.board.turn() === "w" ? "black" : "white";
+                var winner = this.board.turn() === "w" ? "black" : "white";
+                if (this.board.isStalemate()) {
+                    winner = "None, Game reached stalemate";
+                }
                 if (this.player1) {
                     this.player1.send(JSON.stringify({
                         type: messages_1.GAME_OVER,

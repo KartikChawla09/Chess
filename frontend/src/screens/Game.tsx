@@ -44,6 +44,8 @@ const Game = () => {
   const [remoteurl, setRemoteUrl] = useState<string | null>(null);
   const [userColor, setUserColor] = useState<string | null>(null);
   const { customGameId } = useParams();
+  const [random, setRandom] = useState<boolean>(false);
+  const [currentTurn, setCurrentTurn] = useState(chess.turn());
 
   useEffect(() => {
     if (!socket) {
@@ -68,12 +70,14 @@ const Game = () => {
           setBoard(chess.board());
           console.log("Game Started");
           setStarted(true);
+          setCurrentTurn(chess.turn()); // Update the turn on INIT_GAME
           break;
         case MOVE:
           const move = message.payload;
           chess.move(move);
           setBoard(chess.board());
           setMoves((prevMoves) => [...prevMoves, move]);
+          setCurrentTurn(chess.turn()); // Update the turn after MOVE
           console.log("Move Made");
           audio.play();
           break;
@@ -87,7 +91,7 @@ const Game = () => {
           break;
       }
     };
-  }, [socket]);
+  }, [socket, chess, customGameId]);
 
   const customGameHandler = () => {
     if (socket) {
@@ -95,6 +99,7 @@ const Game = () => {
       socket.send(JSON.stringify({ type: CUSTOM_GAME }));
     }
   };
+
   const handleMove = (move: any) => {
     if (chess.turn() === "w" && userColor !== "white") {
       return;
@@ -116,8 +121,13 @@ const Game = () => {
       chess.move(move);
       setMoves((prevMoves) => [...prevMoves, move]);
       setBoard(chess.board());
+      setCurrentTurn(chess.turn()); // Update the turn after handleMove
     }
   };
+
+  useEffect(() => {
+    setCurrentTurn(chess.turn()); // Set the initial turn
+  }, [chess]);
 
   if (!socket) return <div>Connecting...</div>;
   return (
@@ -126,6 +136,11 @@ const Game = () => {
         <h1 className="text-3xl font-bold mb-4 text-white flex justify-center pb-4">
           {player1} vs {player2}
         </h1>
+        <h2 className="text-white text-3xl flex justify-center mb-4">
+          {started && userColor?.charAt(0) === currentTurn
+            ? "Your Turn"
+            : "Opponent's Turn"}
+        </h2>
         <h1 className="text-white text-3xl flex justify-center pb-12">
           {winner
             ? `Winner: ${winner}`
@@ -150,6 +165,7 @@ const Game = () => {
                 <button
                   className="px-8 py-4 text-2xl bg-green-500 hover:bg-green-700 text-white font-bold rounded"
                   onClick={() => {
+                    setRandom(true);
                     if (socket) {
                       socket.send(
                         JSON.stringify({
@@ -159,7 +175,7 @@ const Game = () => {
                     }
                   }}
                 >
-                  Play!
+                  {random ? "In lobby!" : "Play Random!"}
                 </button>
               )}
             </div>
