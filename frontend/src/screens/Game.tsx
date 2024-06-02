@@ -157,6 +157,7 @@ const Game = () => {
               chess={chess}
               board={board}
               handleMove={handleMove}
+              userColor={userColor}
             />
           </div>
           <div className="col-span-2 bg-slate-900 w-full flex flex-col items-center">
@@ -200,27 +201,30 @@ const Game = () => {
             )}
             {started && (
               <div className="mt-4">
-                <h2 className="text-2xl font-bold mb-2 text-white ml-16 mb-12">
-                  Moves
+                <h2 className="text-2xl font-bold text-white flex justify-center mb-12">
+                  Moves Table
                 </h2>
-                <table className="table-auto bg-white text-black">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-2">Move</th>
-                      <th className="px-4 py-2">From</th>
-                      <th className="px-4 py-2">To</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {moves.map((move, index) => (
-                      <tr key={index}>
-                        <td className="border px-4 py-2">{index + 1}</td>
-                        <td className="border px-4 py-2">{move.from}</td>
-                        <td className="border px-4 py-2">{move.to}</td>
+                <div className="overflow-auto max-h-80">
+                  {" "}
+                  <table className="table-auto bg-slate-900 text-white w-full text-center">
+                    <thead>
+                      <tr className="">
+                        <th className="px-6 py-2">Move</th>
+                        <th className="px-6 py-2">From</th>
+                        <th className="px-10 py-2">To</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {moves.map((move, index) => (
+                        <tr key={index}>
+                          <td className="border px-4 py-2">{index + 1}</td>
+                          <td className="border px-4 py-2">{move.from}</td>
+                          <td className="border px-4 py-2">{move.to}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
