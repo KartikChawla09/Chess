@@ -85,7 +85,7 @@ const Game = () => {
           console.log("Game Over");
           break;
         case REDIRECT:
-          const url = "http://localhost:5173/game/" + message.gameId;
+          const url = "http://playchess.onrender.com/game/" + message.gameId;
           setRemoteUrl(url);
           break;
       }
