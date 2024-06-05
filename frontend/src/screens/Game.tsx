@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSocket } from "../hooks/useSocket";
 import ChessBoard from "../components/ChessBoard";
 import { Chess, Square } from "chess.js";
@@ -37,14 +37,68 @@ const Game = () => {
   const [board, setBoard] = useState(chess.board());
   const [started, setStarted] = useState(false);
   const [moves, setMoves] = useState<any[]>([]);
-  const [player1] = useState("Wannabe Magnus");
-  const [player2] = useState("Wannabe Hikaru");
+  const [player1, setPlayer1] = useState("Wannabe Magnus");
+  const [player2, setPlayer2] = useState("Waiting for Opponent...");
   const [winner, setWinner] = useState<string | null>(null);
   const [remoteurl, setRemoteUrl] = useState<string | null>(null);
   const [userColor, setUserColor] = useState<string | null>(null);
   const { customGameId } = useParams();
   const [random, setRandom] = useState<boolean>(false);
   const [currentTurn, setCurrentTurn] = useState(chess.turn());
+  const [inputValue, setInputValue] = useState<string>("");
+  const [addName, setAddName] = useState<boolean>(false);
+
+  const [timeWhite, setTimeWhite] = useState<number>(300); // 5 minutes in seconds
+  const [timeBlack, setTimeBlack] = useState<number>(300);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(event.target.value);
+  };
+
+  const handleFormSubmit = () => {
+    setPlayer1(inputValue);
+    setAddName(true);
+  };
+
+  const startTimer = () => {
+    timerRef.current = setInterval(() => {
+      setCurrentTurn((prevTurn) => {
+        if (prevTurn === "w") {
+          setTimeWhite((prevTime) => {
+            if (prevTime <= 1) {
+              clearInterval(timerRef.current as NodeJS.Timeout);
+              endGame("black");
+              return 0;
+            }
+            return prevTime - 1;
+          });
+        } else {
+          setTimeBlack((prevTime) => {
+            if (prevTime <= 1) {
+              clearInterval(timerRef.current as NodeJS.Timeout);
+              endGame("white");
+              return 0;
+            }
+            return prevTime - 1;
+          });
+        }
+        return prevTurn;
+      });
+    }, 1000);
+  };
+
+  const endGame = (winner: "white" | "black") => {
+    setWinner(winner);
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: GAME_OVER,
+          payload: { winner },
+        })
+      );
+    }
+  };
 
   useEffect(() => {
     if (!socket) {
@@ -70,6 +124,9 @@ const Game = () => {
           console.log("Game Started");
           setStarted(true);
           setCurrentTurn(chess.turn()); // Update the turn on INIT_GAME
+          setPlayer1(message.payload.player1Name);
+          setPlayer2(message.payload.player2Name);
+          startTimer();
           break;
         case MOVE:
           const move = message.payload;
@@ -83,8 +140,10 @@ const Game = () => {
         case GAME_OVER:
           setWinner(message.payload.winner);
           console.log("Game Over");
+          clearInterval(timerRef.current as NodeJS.Timeout);
           break;
         case REDIRECT:
+          // const url = "http://localhost:5173/game/" + message.gameId;
           const url = "http://playchess.onrender.com/game/" + message.gameId;
           setRemoteUrl(url);
           break;
@@ -127,18 +186,37 @@ const Game = () => {
     setCurrentTurn(chess.turn()); // Set the initial turn
   }, [chess]);
 
-  if (!socket) return <div>Connecting...</div>;
+  if (!socket)
+    return (
+      <div className="text-white flex justify-center text-2xl items-center min-h-screen">
+        Connecting to backend...
+      </div>
+    );
   return (
     <div className="justify-center flex flex-col items-center">
       <div className="pt-8 max-w-screen-lg w-full">
-        <h1 className="text-3xl font-bold mb-4 text-white flex justify-center pb-4">
-          {player1} vs {player2}
-        </h1>
-        <h2 className="text-white text-3xl flex justify-center mb-4">
-          {started && userColor?.charAt(0) === currentTurn
-            ? "Your Turn"
-            : "Opponent's Turn"}
-        </h2>
+        {!addName && (
+          <div className="text-3xl font-bold mb-4 flex justify-center pb-4">
+            <span className="text-white mt-1 mr-3">Your Name!</span>
+            <input
+              type="text"
+              value={inputValue}
+              onChange={handleInputChange}
+              className="ml-2 border border-gray-300 rounded"
+            />
+            <button
+              onClick={handleFormSubmit}
+              className="ml-2 p-2 bg-green-500 hover:bg-green-700 text-white rounded"
+            >
+              Submit
+            </button>
+          </div>
+        )}
+        {addName && (
+          <h1 className="text-3xl font-bold mb-4 text-white flex justify-center pb-4">
+            {player1} vs {player2}
+          </h1>
+        )}
         <h1 className="text-white text-3xl flex justify-center pb-12">
           {winner
             ? `Winner: ${winner}`
@@ -156,9 +234,11 @@ const Game = () => {
               board={board}
               handleMove={handleMove}
               userColor={userColor}
+              timeWhite={timeWhite}
+              timeBlack={timeBlack}
             />
           </div>
-          <div className="col-span-2 bg-slate-900 w-full flex flex-col items-center">
+          <div className="col-span-2 bg-slate-900 w-full flex flex-col items-center ml-24">
             <div className="pt-8">
               {!started && (
                 <button
@@ -169,6 +249,7 @@ const Game = () => {
                       socket.send(
                         JSON.stringify({
                           type: INIT_GAME,
+                          payload: { player2: player1 },
                         })
                       );
                     }
@@ -198,7 +279,12 @@ const Game = () => {
               </button>
             )}
             {started && (
-              <div className="mt-4">
+              <div>
+                <h2 className="text-white text-2xl flex justify-center mb-8">
+                  {started && userColor?.charAt(0) === currentTurn
+                    ? "Your Turn"
+                    : "Opponent's Turn"}
+                </h2>
                 <h2 className="text-2xl font-bold text-white flex justify-center mb-12">
                   Moves Table
                 </h2>

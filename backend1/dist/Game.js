@@ -15,18 +15,26 @@ const messages_1 = require("./messages");
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 class Game {
-    constructor(id, player1, player2) {
+    constructor(id, player1, player2, player1Name, player2Name) {
         this.moveCount = 0;
+        this.timer = null;
         this.id = id;
         this.player1 = player1;
         this.player2 = player2;
+        this.player1Name = player1Name;
+        this.player2Name = player2Name;
         this.board = new chess_js_1.Chess();
         this.startTime = new Date();
+        this.timeWhite = 300; // 5 minutes in seconds
+        this.timeBlack = 300; // 5 minutes in seconds
+        this.startTimer();
         if (this.player1) {
             this.player1.send(JSON.stringify({
                 type: messages_1.INIT_GAME,
                 payload: {
                     color: "white",
+                    player1Name: this.player1Name,
+                    player2Name: this.player2Name,
                 },
             }));
         }
@@ -35,6 +43,49 @@ class Game {
                 type: messages_1.INIT_GAME,
                 payload: {
                     color: "black",
+                    player1Name: this.player1Name,
+                    player2Name: this.player2Name,
+                },
+            }));
+        }
+    }
+    startTimer() {
+        this.timer = setInterval(() => {
+            if (this.board.turn() === "w") {
+                this.timeWhite--;
+                if (this.timeWhite <= 0) {
+                    this.endGame("Black");
+                }
+            }
+            else {
+                this.timeBlack--;
+                if (this.timeBlack <= 0) {
+                    this.endGame("White");
+                }
+            }
+        }, 1000);
+    }
+    stopTimer() {
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+    }
+    endGame(winner) {
+        this.stopTimer();
+        if (this.player1) {
+            this.player1.send(JSON.stringify({
+                type: messages_1.GAME_OVER,
+                payload: {
+                    winner,
+                },
+            }));
+        }
+        if (this.player2) {
+            this.player2.send(JSON.stringify({
+                type: messages_1.GAME_OVER,
+                payload: {
+                    winner,
                 },
             }));
         }
@@ -79,22 +130,7 @@ class Game {
                 if (this.board.isStalemate()) {
                     winner = "None, Draw by Stalemate";
                 }
-                if (this.player1) {
-                    this.player1.send(JSON.stringify({
-                        type: messages_1.GAME_OVER,
-                        payload: {
-                            winner,
-                        },
-                    }));
-                }
-                if (this.player2) {
-                    this.player2.send(JSON.stringify({
-                        type: messages_1.GAME_OVER,
-                        payload: {
-                            winner,
-                        },
-                    }));
-                }
+                this.endGame(winner);
                 return;
             }
             this.moveCount++;

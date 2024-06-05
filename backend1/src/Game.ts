@@ -8,27 +8,41 @@ const prisma = new PrismaClient();
 export class Game {
   public player1: WebSocket | null;
   public player2: WebSocket | null;
+  public player1Name?: string;
+  public player2Name?: string;
   public board: Chess;
   private startTime: Date;
   private moveCount = 0;
   public id: string;
+  public timeWhite: number; // in seconds
+  public timeBlack: number; // in seconds
+  private timer: NodeJS.Timeout | null = null;
 
   constructor(
     id: string,
     player1: WebSocket | null,
-    player2: WebSocket | null
+    player2: WebSocket | null,
+    player1Name: string,
+    player2Name: string
   ) {
     this.id = id;
     this.player1 = player1;
     this.player2 = player2;
+    this.player1Name = player1Name;
+    this.player2Name = player2Name;
     this.board = new Chess();
     this.startTime = new Date();
+    this.timeWhite = 300; // 5 minutes in seconds
+    this.timeBlack = 300; // 5 minutes in seconds
+    this.startTimer();
     if (this.player1) {
       this.player1.send(
         JSON.stringify({
           type: INIT_GAME,
           payload: {
             color: "white",
+            player1Name: this.player1Name,
+            player2Name: this.player2Name,
           },
         })
       );
@@ -39,6 +53,55 @@ export class Game {
           type: INIT_GAME,
           payload: {
             color: "black",
+            player1Name: this.player1Name,
+            player2Name: this.player2Name,
+          },
+        })
+      );
+    }
+  }
+
+  private startTimer() {
+    this.timer = setInterval(() => {
+      if (this.board.turn() === "w") {
+        this.timeWhite--;
+        if (this.timeWhite <= 0) {
+          this.endGame("Black");
+        }
+      } else {
+        this.timeBlack--;
+        if (this.timeBlack <= 0) {
+          this.endGame("White");
+        }
+      }
+    }, 1000);
+  }
+
+  private stopTimer() {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+  }
+
+  private endGame(winner: string) {
+    this.stopTimer();
+    if (this.player1) {
+      this.player1.send(
+        JSON.stringify({
+          type: GAME_OVER,
+          payload: {
+            winner,
+          },
+        })
+      );
+    }
+    if (this.player2) {
+      this.player2.send(
+        JSON.stringify({
+          type: GAME_OVER,
+          payload: {
+            winner,
           },
         })
       );
@@ -92,26 +155,7 @@ export class Game {
       if (this.board.isStalemate()) {
         winner = "None, Draw by Stalemate";
       }
-      if (this.player1) {
-        this.player1.send(
-          JSON.stringify({
-            type: GAME_OVER,
-            payload: {
-              winner,
-            },
-          })
-        );
-      }
-      if (this.player2) {
-        this.player2.send(
-          JSON.stringify({
-            type: GAME_OVER,
-            payload: {
-              winner,
-            },
-          })
-        );
-      }
+      this.endGame(winner);
       return;
     }
     this.moveCount++;

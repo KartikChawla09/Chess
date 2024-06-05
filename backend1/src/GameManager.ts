@@ -5,6 +5,7 @@ import {
   CUSTOM_GAME,
   REDIRECT,
   START_CUSTOM,
+  GAME_OVER,
 } from "./messages";
 import { Game } from "./Game";
 import { PrismaClient } from "@prisma/client";
@@ -15,6 +16,8 @@ export class GameManager {
   private pendingUser: WebSocket | null;
   private users: WebSocket[];
   private prisma: PrismaClient;
+  private player1: string;
+  private player2: string;
 
   constructor(prisma: PrismaClient) {
     this.customGames = new Map();
@@ -22,6 +25,8 @@ export class GameManager {
     this.users = [];
     this.pendingUser = null;
     this.prisma = prisma;
+    this.player1 = "";
+    this.player2 = "";
   }
 
   addUser(socket: WebSocket) {
@@ -38,9 +43,16 @@ export class GameManager {
       let message = JSON.parse(data.toString());
       if (message.type === INIT_GAME) {
         if (this.pendingUser) {
-          const game = await this.createGame(this.pendingUser, socket);
+          this.player2 = message.payload.player2;
+          const game = await this.createGame(
+            this.pendingUser,
+            socket,
+            this.player1,
+            this.player2
+          );
           this.pendingUser = null;
         } else {
+          this.player1 = message.payload.player2;
           this.pendingUser = socket;
         }
       }
@@ -48,6 +60,7 @@ export class GameManager {
         const game = this.findGameBySocket(socket);
         if (game) {
           game.makeMove(socket, message.payload.move);
+          this.broadcastTimeUpdate(game);
         }
       }
       if (message.type === CUSTOM_GAME) {
@@ -59,7 +72,12 @@ export class GameManager {
         const customGameId = message.customGameId;
         const otherUser = this.customGames.get(customGameId);
         if (otherUser) {
-          const game = await this.createGame(socket, otherUser);
+          const game = await this.createGame(
+            socket,
+            otherUser,
+            "Wannabe Magnus",
+            "Wannabe Hikaru"
+          );
         }
       }
     });
@@ -78,14 +96,22 @@ export class GameManager {
 
   private async createGame(
     player1: WebSocket,
-    player2: WebSocket
+    player2: WebSocket,
+    player1Name: string,
+    player2Name: string
   ): Promise<Game> {
     const gameRecord = await this.prisma.game.create({
       data: {
         status: "ongoing",
       },
     });
-    const game = new Game(gameRecord.id, player1, player2);
+    const game = new Game(
+      gameRecord.id,
+      player1,
+      player2,
+      player1Name,
+      player2Name
+    );
     this.games.set(gameRecord.id, game);
     return game;
   }
@@ -103,7 +129,13 @@ export class GameManager {
     });
     if (!gameRecord) return null;
 
-    const game = new Game(gameRecord.id, null, null);
+    const game = new Game(
+      gameRecord.id,
+      null,
+      null,
+      "Wannabe Magnus",
+      "Wannabe Hikaru"
+    );
     gameRecord.moves.forEach((move) => {
       game.board.move({ from: move.from, to: move.to });
     });
@@ -137,6 +169,28 @@ export class GameManager {
           })
         );
       }
+    }
+  }
+
+  private broadcastTimeUpdate(game: Game) {
+    const timeWhite = game.timeWhite;
+    const timeBlack = game.timeBlack;
+
+    if (game.player1) {
+      game.player1.send(
+        JSON.stringify({
+          type: "time_update",
+          payload: { timeWhite, timeBlack },
+        })
+      );
+    }
+    if (game.player2) {
+      game.player2.send(
+        JSON.stringify({
+          type: "time_update",
+          payload: { timeWhite, timeBlack },
+        })
+      );
     }
   }
 }
