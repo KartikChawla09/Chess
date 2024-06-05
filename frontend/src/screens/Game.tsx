@@ -143,7 +143,7 @@ const Game = () => {
           clearInterval(timerRef.current as NodeJS.Timeout);
           break;
         case REDIRECT:
-          // const url = "http://localhost:5173/game/" + message.gameId;
+          //const url = "http://localhost:5173/game/" + message.gameId;
           const url = "http://playchess.onrender.com/game/" + message.gameId;
           setRemoteUrl(url);
           break;

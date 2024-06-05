@@ -1,15 +1,16 @@
-import { Color, PieceSymbol, Square } from "chess.js";
+import { Chess, Color, PieceSymbol, Square } from "chess.js";
 import { useEffect, useState } from "react";
 import MoveSound from "../assets/move-self.mp3";
 
 const ChessBoard = ({
+  chess,
   board,
   handleMove,
   userColor,
   timeWhite,
   timeBlack,
 }: {
-  chess: any;
+  chess: Chess;
   setBoard: any;
   userColor: string | null;
   timeWhite: number;
@@ -24,12 +25,32 @@ const ChessBoard = ({
   const audio = new Audio(MoveSound);
   const [from, setFrom] = useState<null | Square>(null);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [legalMoves, setLegalMoves] = useState<Square[]>([]);
 
   useEffect(() => {
     if (userColor) {
       setIsFlipped(userColor === "black");
     }
   }, [userColor]);
+
+  const getLegalMoves = (square: Square) => {
+    const moves = chess.moves({ square, verbose: true });
+    return moves.map((move) => move.to);
+  };
+
+  const handleSquareClick = (squareRepresentation: Square) => {
+    if (!from) {
+      setFrom(squareRepresentation);
+      setLegalMoves(getLegalMoves(squareRepresentation));
+    } else {
+      const move = { from, to: squareRepresentation };
+      setFrom(null);
+      setLegalMoves([]);
+      handleMove(move);
+      console.log(move);
+      audio.play();
+    }
+  };
 
   return (
     <div className="flex">
@@ -60,25 +81,16 @@ const ChessBoard = ({
                 ) +
                   "" +
                   (8 - rowIndex)) as Square;
+                const isLegalMove = legalMoves.includes(squareRepresentation);
                 return (
                   <div
-                    onClick={() => {
-                      if (!from) {
-                        setFrom(squareRepresentation);
-                      } else {
-                        const move = { from, to: squareRepresentation };
-                        setFrom(null);
-                        handleMove(move);
-                        console.log(move);
-                        audio.play();
-                      }
-                    }}
+                    onClick={() => handleSquareClick(squareRepresentation)}
                     key={colIndex}
                     className={`w-16 h-16 ${
                       (rowIndex + colIndex) % 2 == 0
                         ? "bg-green-500"
                         : "bg-white"
-                    }`}
+                    } ${isLegalMove ? "border-4 border-yellow-500" : ""}`}
                   >
                     <div className="w-full justify-center flex h-full">
                       <div className="h-full flex flex-col justify-center">
