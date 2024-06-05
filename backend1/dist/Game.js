@@ -136,5 +136,25 @@ class Game {
             this.moveCount++;
         });
     }
+    broadcastMessage(message) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.player1) {
+                this.player1.send(JSON.stringify({
+                    type: messages_1.MESSAGE_RECEIVED,
+                    payload: {
+                        message: message,
+                    },
+                }));
+            }
+            if (this.player2) {
+                this.player2.send(JSON.stringify({
+                    type: messages_1.MESSAGE_RECEIVED,
+                    payload: {
+                        message: message,
+                    },
+                }));
+            }
+        });
+    }
 }
 exports.Game = Game;

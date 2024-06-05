@@ -62,6 +62,12 @@ class GameManager {
                     const game = yield this.createGame(socket, otherUser, "Wannabe Magnus", "Wannabe Hikaru");
                 }
             }
+            if (message.type === messages_1.MESSAGE_RECEIVED) {
+                const game = this.findGameBySocket(socket);
+                if (game) {
+                    game.broadcastMessage(message.payload);
+                }
+            }
         }));
     }
     createCustomGame(socket) {

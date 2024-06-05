@@ -4,6 +4,7 @@ import ChessBoard from "../components/ChessBoard";
 import { Chess, Square } from "chess.js";
 import { useParams } from "react-router-dom";
 import MoveSound from "../assets/move-self.mp3";
+import ChatSection from "../components/ChatSection";
 
 export const INIT_GAME = "init_game";
 export const MOVE = "move";
@@ -12,6 +13,7 @@ export const REJOIN_GAME = "rejoin_game";
 export const CUSTOM_GAME = "custom_game";
 export const REDIRECT = "redirect";
 export const START_CUSTOM = "start_custom";
+export const MESSAGE_RECEIVED = "message_received";
 const audio = new Audio(MoveSound);
 
 export function isPromoting(chess: Chess, from: Square, to: Square) {
@@ -31,6 +33,11 @@ export function isPromoting(chess: Chess, from: Square, to: Square) {
   return true;
 }
 
+interface Messages {
+  content: string;
+  userColor: string | null;
+}
+
 const Game = () => {
   const socket = useSocket();
   const [chess] = useState(new Chess());
@@ -47,10 +54,10 @@ const Game = () => {
   const [currentTurn, setCurrentTurn] = useState(chess.turn());
   const [inputValue, setInputValue] = useState<string>("");
   const [addName, setAddName] = useState<boolean>(false);
-
   const [timeWhite, setTimeWhite] = useState<number>(180); // 3 minutes in seconds
   const [timeBlack, setTimeBlack] = useState<number>(180);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [messages, setMessages] = useState<Messages[]>([]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);
@@ -143,9 +150,15 @@ const Game = () => {
           clearInterval(timerRef.current as NodeJS.Timeout);
           break;
         case REDIRECT:
-          //const url = "http://localhost:5173/game/" + message.gameId;
+          // const url = "http://localhost:5173/game/" + message.gameId;
           const url = "http://playchess.onrender.com/game/" + message.gameId;
           setRemoteUrl(url);
+          break;
+        case MESSAGE_RECEIVED:
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            message.payload.message,
+          ]);
           break;
       }
     };
@@ -193,124 +206,127 @@ const Game = () => {
       </div>
     );
   return (
-    <div className="justify-center flex flex-col items-center">
-      <div className="pt-8 max-w-screen-lg w-full">
-        {!addName && (
-          <div className="text-3xl font-bold mb-4 flex justify-center pb-4">
-            <span className="text-white mt-1 mr-3">Your Name!</span>
-            <input
-              type="text"
-              value={inputValue}
-              onChange={handleInputChange}
-              className="ml-2 border border-gray-300 rounded"
-            />
-            <button
-              onClick={handleFormSubmit}
-              className="ml-2 p-2 bg-green-500 hover:bg-green-700 text-white rounded"
-            >
-              Submit
-            </button>
-          </div>
-        )}
-        {addName && (
-          <h1 className="text-3xl font-bold mb-4 text-white flex justify-center pb-4">
-            {player1} vs {player2}
+    <div className="flex justify-evenly">
+      <ChatSection messages={messages} socket={socket} userColor={userColor} />
+      <div className="justify-center flex flex-col items-center mr-20">
+        <div className="pt-8 max-w-screen-lg w-full">
+          {!addName && (
+            <div className="text-3xl font-bold mb-4 flex justify-center pb-4">
+              <span className="text-white mt-1 mr-3">Your Name!</span>
+              <input
+                type="text"
+                value={inputValue}
+                onChange={handleInputChange}
+                className="ml-2 border border-gray-300 rounded"
+              />
+              <button
+                onClick={handleFormSubmit}
+                className="ml-2 p-2 bg-green-500 hover:bg-green-700 text-white rounded"
+              >
+                Submit
+              </button>
+            </div>
+          )}
+          {addName && (
+            <h1 className="text-3xl font-bold mb-4 text-white flex justify-center pb-4">
+              {player1} vs {player2}
+            </h1>
+          )}
+          <h1 className="text-white text-3xl flex justify-center pb-12">
+            {winner
+              ? `Winner: ${winner}`
+              : `Current Player:  ${
+                  userColor
+                    ? userColor.charAt(0).toUpperCase() + userColor.slice(1)
+                    : "UNKNOWN"
+                }`}
           </h1>
-        )}
-        <h1 className="text-white text-3xl flex justify-center pb-12">
-          {winner
-            ? `Winner: ${winner}`
-            : `Current Player:  ${
-                userColor
-                  ? userColor.charAt(0).toUpperCase() + userColor.slice(1)
-                  : "UNKNOWN"
-              }`}
-        </h1>
-        <div className="grid grid-cols-6 gap-4 w-full">
-          <div className="col-span-4 w-full flex justify-center">
-            <ChessBoard
-              setBoard={setBoard}
-              chess={chess}
-              board={board}
-              handleMove={handleMove}
-              userColor={userColor}
-              timeWhite={timeWhite}
-              timeBlack={timeBlack}
-            />
-          </div>
-          <div className="col-span-2 bg-slate-900 w-full flex flex-col items-center ml-24">
-            <div className="pt-8">
-              {!started && (
+          <div className="grid grid-cols-6 gap-4 w-full">
+            <div className="col-span-4 w-full flex justify-center">
+              <ChessBoard
+                setBoard={setBoard}
+                chess={chess}
+                board={board}
+                handleMove={handleMove}
+                userColor={userColor}
+                timeWhite={timeWhite}
+                timeBlack={timeBlack}
+              />
+            </div>
+            <div className="col-span-2 bg-slate-900 w-full flex flex-col items-center ml-24">
+              <div className="pt-8">
+                {!started && (
+                  <button
+                    className="px-8 py-4 text-2xl bg-green-500 hover:bg-green-700 text-white font-bold rounded"
+                    onClick={() => {
+                      setRandom(true);
+                      if (socket) {
+                        socket.send(
+                          JSON.stringify({
+                            type: INIT_GAME,
+                            payload: { player2: player1 },
+                          })
+                        );
+                      }
+                    }}
+                  >
+                    {random ? "In lobby!" : "Play Random!"}
+                  </button>
+                )}
+              </div>
+              {!remoteurl && !started && (
                 <button
-                  className="px-8 py-4 text-2xl bg-green-500 hover:bg-green-700 text-white font-bold rounded"
-                  onClick={() => {
-                    setRandom(true);
-                    if (socket) {
-                      socket.send(
-                        JSON.stringify({
-                          type: INIT_GAME,
-                          payload: { player2: player1 },
-                        })
-                      );
-                    }
-                  }}
+                  className="text-white text-2xl bg-green-500 mt-8 hover:bg-green-700 px-8 py-4 font-bold rounded"
+                  onClick={customGameHandler}
                 >
-                  {random ? "In lobby!" : "Play Random!"}
+                  Custom!
                 </button>
               )}
-            </div>
-            {!remoteurl && !started && (
-              <button
-                className="text-white text-2xl bg-green-500 mt-8 hover:bg-green-700 px-8 py-4 font-bold rounded"
-                onClick={customGameHandler}
-              >
-                Custom!
-              </button>
-            )}
-            {!started && remoteurl && (
-              <button
-                className="text-white text-1xl mt-10"
-                onClick={() => {
-                  navigator.clipboard.writeText(remoteurl);
-                  alert("URL Copied!");
-                }}
-              >
-                Click to Copy URL {remoteurl}
-              </button>
-            )}
-            {started && (
-              <div>
-                <h2 className="text-white text-2xl flex justify-center mb-8">
-                  {started && userColor?.charAt(0) === currentTurn
-                    ? "Your Turn"
-                    : "Opponent's Turn"}
-                </h2>
-                <h2 className="text-2xl font-bold text-white flex justify-center mb-12">
-                  Moves Table
-                </h2>
-                <div className="overflow-auto max-h-80">
-                  {" "}
-                  <table className="table-auto bg-slate-900 text-white w-full text-center">
-                    <thead>
-                      <tr className="">
-                        <th className="px-6 py-2">Move</th>
-                        <th className="px-6 py-2">From</th>
-                        <th className="px-10 py-2">To</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {moves.map((move, index) => (
-                        <tr key={index}>
-                          <td className="border px-4 py-2">{index + 1}</td>
-                          <td className="border px-4 py-2">{move.from}</td>
-                          <td className="border px-4 py-2">{move.to}</td>
+              {!started && remoteurl && (
+                <button
+                  className="text-white text-1xl mt-10"
+                  onClick={() => {
+                    navigator.clipboard.writeText(remoteurl);
+                    alert("URL Copied!");
+                  }}
+                >
+                  Click to Copy URL {remoteurl}
+                </button>
+              )}
+              {started && (
+                <div>
+                  <h2 className="text-white text-2xl flex justify-center mb-8">
+                    {started && userColor?.charAt(0) === currentTurn
+                      ? "Your Turn"
+                      : "Opponent's Turn"}
+                  </h2>
+                  <h2 className="text-2xl font-bold text-white flex justify-center mb-12">
+                    Moves Table
+                  </h2>
+                  <div className="overflow-auto max-h-80">
+                    {" "}
+                    <table className="table-auto bg-slate-900 text-white w-full text-center">
+                      <thead>
+                        <tr className="">
+                          <th className="px-6 py-2">Move</th>
+                          <th className="px-6 py-2">From</th>
+                          <th className="px-10 py-2">To</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {moves.map((move, index) => (
+                          <tr key={index}>
+                            <td className="border px-4 py-2">{index + 1}</td>
+                            <td className="border px-4 py-2">{move.from}</td>
+                            <td className="border px-4 py-2">{move.to}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -1,9 +1,14 @@
 import { Chess, Move, Square } from "chess.js";
 import { WebSocket } from "ws";
-import { GAME_OVER, INIT_GAME } from "./messages";
+import { GAME_OVER, INIT_GAME, MESSAGE_RECEIVED } from "./messages";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+interface Messages {
+  content: string;
+  userColor: string | null;
+}
 
 export class Game {
   public player1: WebSocket | null;
@@ -159,5 +164,29 @@ export class Game {
       return;
     }
     this.moveCount++;
+  }
+
+  async broadcastMessage(message: Messages) {
+    console.log(message);
+    if (this.player1) {
+      this.player1.send(
+        JSON.stringify({
+          type: MESSAGE_RECEIVED,
+          payload: {
+            message: message,
+          },
+        })
+      );
+    }
+    if (this.player2) {
+      this.player2.send(
+        JSON.stringify({
+          type: MESSAGE_RECEIVED,
+          payload: {
+            message: message,
+          },
+        })
+      );
+    }
   }
 }

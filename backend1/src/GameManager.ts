@@ -6,6 +6,7 @@ import {
   REDIRECT,
   START_CUSTOM,
   GAME_OVER,
+  MESSAGE_RECEIVED,
 } from "./messages";
 import { Game } from "./Game";
 import { PrismaClient } from "@prisma/client";
@@ -78,6 +79,12 @@ export class GameManager {
             "Wannabe Magnus",
             "Wannabe Hikaru"
           );
+        }
+      }
+      if (message.type === MESSAGE_RECEIVED) {
+        const game = this.findGameBySocket(socket);
+        if (game) {
+          game.broadcastMessage(message.payload);
         }
       }
     });
