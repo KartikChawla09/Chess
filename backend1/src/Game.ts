@@ -32,8 +32,8 @@ export class Game {
     this.player2Name = player2Name;
     this.board = new Chess();
     this.startTime = new Date();
-    this.timeWhite = 300; // 5 minutes in seconds
-    this.timeBlack = 300; // 5 minutes in seconds
+    this.timeWhite = 180; // 3 minutes in seconds
+    this.timeBlack = 180; // 3 minutes in seconds
     this.startTimer();
     if (this.player1) {
       this.player1.send(

@@ -48,8 +48,8 @@ const Game = () => {
   const [inputValue, setInputValue] = useState<string>("");
   const [addName, setAddName] = useState<boolean>(false);
 
-  const [timeWhite, setTimeWhite] = useState<number>(300); // 5 minutes in seconds
-  const [timeBlack, setTimeBlack] = useState<number>(300);
+  const [timeWhite, setTimeWhite] = useState<number>(180); // 3 minutes in seconds
+  const [timeBlack, setTimeBlack] = useState<number>(180);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
