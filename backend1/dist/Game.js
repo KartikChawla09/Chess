@@ -138,6 +138,7 @@ class Game {
     }
     broadcastMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log(message);
             if (this.player1) {
                 this.player1.send(JSON.stringify({
                     type: messages_1.MESSAGE_RECEIVED,
