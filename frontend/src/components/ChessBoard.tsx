@@ -55,10 +55,10 @@ const ChessBoard = ({
   return (
     <div className="flex">
       <div>
-        <h3 className="text-white text-2xl mr-16 text-center">
+        {/* <h3 className="text-white text-2xl mr-16 text-center">
           Currently Moving From {!from && "~"}
           {from && from}
-        </h3>
+        </h3> */}
         <div className="justify-center pr-16 mt-16">
           <div className="text-white text-3xl flex justify-center mb-4 font-bold">
             Clock
