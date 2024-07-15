@@ -16,6 +16,7 @@ export const START_CUSTOM = "start_custom";
 export const MESSAGE_RECEIVED = "message_received";
 const audio = new Audio(MoveSound);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function isPromoting(chess: Chess, from: Square, to: Square) {
   if (!from) {
     return false;
@@ -43,6 +44,7 @@ const Game = () => {
   const [chess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
   const [started, setStarted] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [moves, setMoves] = useState<any[]>([]);
   const [player1, setPlayer1] = useState("Wannabe Magnus");
   const [player2, setPlayer2] = useState("Waiting for Opponent...");
@@ -68,6 +70,7 @@ const Game = () => {
     setAddName(true);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const startTimer = () => {
     timerRef.current = setInterval(() => {
       setCurrentTurn((prevTurn) => {
@@ -136,6 +139,7 @@ const Game = () => {
           startTimer();
           break;
         case MOVE:
+          // eslint-disable-next-line no-case-declarations
           const move = message.payload;
           chess.move(move);
           setBoard(chess.board());
@@ -151,6 +155,7 @@ const Game = () => {
           break;
         case REDIRECT:
           // const url = "http://localhost:5173/game/" + message.gameId;
+          // eslint-disable-next-line no-case-declarations
           const url = "http://playchess.onrender.com/game/" + message.gameId;
           setRemoteUrl(url);
           break;
@@ -162,7 +167,7 @@ const Game = () => {
           break;
       }
     };
-  }, [socket, chess, customGameId]);
+  }, [socket, chess, customGameId, startTimer]);
 
   const customGameHandler = () => {
     if (socket) {
@@ -170,6 +175,7 @@ const Game = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleMove = (move: any) => {
     if (chess.turn() === "w" && userColor !== "white") {
       return;
@@ -210,7 +216,7 @@ const Game = () => {
       <ChatSection messages={messages} socket={socket} userColor={userColor} />
       <div className="justify-center flex flex-col items-center mr-20">
         <div className="pt-8 max-w-screen-lg w-full">
-          {!addName && (
+          {!started && !addName && (
             <div className="text-3xl font-bold mb-4 flex justify-center pb-4">
               <span className="text-white mt-1 mr-3">Your Name!</span>
               <input
